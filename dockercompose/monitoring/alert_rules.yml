@@ -1,0 +1,62 @@
+groups:
+  - name: TestServiceAlerts
+    rules:
+      # 1) Алерт если приложение Test-Service не отвечает ( метрика up == 0 )
+      - alert: TestServiceDown
+        expr: up{job="Test-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Сервис Test-Service недоступен"
+          description: "Job Test-Service не даёт метрик уже более минуты."
+
+      # 2) Алерт если PostgreSQL-экспортер не отвечает
+      - alert: PostgresExporterDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Postgres Exporter недоступен"
+          description: "Job postgres-exporter не даёт метрик более 2 минут."
+
+      # 3) Алерт если количество открытых соединений к БД больше 100 (пример)
+      - alert: PostgresTooManyConnections
+        expr: pg_stat_activity_count > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Слишком много соединений к PostgreSQL"
+          description: "В БД {{ $labels.instance }} более 100 активных соединений уже 5 минут."
+
+      # 4) Алерт если RabbitMQ-экспортер недоступен
+      - alert: RabbitmqExporterDown
+        expr: up{job="rabbitmq-exporter"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RabbitMQ Exporter недоступен"
+          description: "Job rabbitmq-exporter не даёт метрик более 2 минут."
+
+      # 5) Алерт если длина очереди RabbitMQ > 50 (пример)
+      - alert: RabbitmqQueueLengthHigh
+        expr: rabbitmq_queue_messages_ready > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Длина очереди RabbitMQ слишком большая"
+          description: "В очереди {{ $labels.queue }} количество сообщений > 50 уже 5 минут."
+
+      # 6) Алерт если целевой контейнер Test service потребляет слишком много CPU (> 80%)
+      - alert: HighCpuUsageOnTestService
+        expr: rate(container_cpu_usage_seconds_total{container="Test-service-app"}[2m]) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Высокая загрузка CPU у Test-service-app"
+          description: "CPU usage контейнера Test-service-app стабильно выше 80% за последние 2 минуты."
